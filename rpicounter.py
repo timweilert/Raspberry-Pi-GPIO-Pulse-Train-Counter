@@ -4,7 +4,12 @@ import RPi.GPIO as GPIO
 import threading
 import time
 import subprocess
+import os
+from subprocess import PIPE, Popen
+import random
 
+script_path = os.path.realpath(__file__)
+script_dir = os.path.dirname(script_path)
 input_gpio = 26
 hook_gpio = 16
 
@@ -13,6 +18,7 @@ def hook(self):
 	global dial_list
 	global previous_pin_status
 	global dial_tone_process
+	global script_dir
 	print("Hook")
 	pin_status = GPIO.input(hook_gpio)
 	print(pin_status)
@@ -20,7 +26,8 @@ def hook(self):
 		if previous_pin_status == 1: 
 			dial_list.clear()
 			print("you picked up")
-			dial_tone_process = subprocess.Popen("mplayer ./dial_tone.mp3", shell = True)
+			dial_tone_string = "mplayer %s/dial_tone.mp3" % script_dir
+			dial_tone_process = subprocess.Popen(dial_tone_string, shell = True)
 	if pin_status == 1: #receiver is hung up
 		dial_list.clear()
 		if previous_pin_status == 0:
@@ -70,10 +77,24 @@ if __name__ == '__main__':
 			dial_list.append(str(pulse_count))
 			print(dial_list)
 			pulse_count = 0
+			if len(dial_list) == 1:
+				subprocess.Popen("killall -9 mplayer", shell = True)
 			if len(dial_list) == 5:
+				command_string = "mplayer %s/ring.mp3" % script_dir
+				ring_times = random.randint(1,3)
+				i = 1
+				while i <= ring_times:
+					subprocess.call(command_string, shell=True)
+					i += 1
 				zip = listToString(dial_list)
 				print(zip)
 				dial_list = []
 				subprocess.Popen("killall -9 mplayer", shell = True)
 				command_string = "ruby /home/dlynch/automatic-david-lynch-weather/weather.rb %s" % (zip)
-				subprocess.Popen(command_string, shell = True)
+				weather_process = subprocess.run(command_string, capture_output=True, shell=True)
+				#weather_process_string = str(weather_process)
+				#print("string from weather_process")
+				#print(weather_process_string)
+				if "key not found: \"location\"" in str(weather_process):
+					cannot_complete_string = "mplayer %s/cannot_complete.mp3" % script_dir
+					subprocess.Popen(cannot_complete_string, shell = True)
