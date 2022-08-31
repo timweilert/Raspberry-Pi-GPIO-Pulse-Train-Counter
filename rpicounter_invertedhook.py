@@ -33,6 +33,7 @@ def hook(self):
 		if previous_pin_status == 1:
 			print("you hung up")
 			subprocess.Popen("killall -9 mplayer", shell = True)
+			#time.sleep(1)
 	previous_pin_status = pin_status
 
 def count(self):
@@ -84,10 +85,12 @@ if __name__ == '__main__':
 				ring_times = random.randint(1,3)
 				i = 1
 				while i <= ring_times:
-					if (previous_pin_status == 0):
+					if (previous_pin_status == 0): #hang up during ringing
+						i = ring_times + 1
 						break
-					subprocess.call(command_string, shell=True)
-					i += 1
+					if (previous_pin_status == 1):
+						subprocess.call(command_string, shell=True)
+						i += 1
 				zip = listToString(dial_list)
 				print(zip)
 				dial_list = []
