@@ -11,7 +11,7 @@ import random
 script_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(script_path)
 input_gpio = 26
-hook_gpio = 16
+hook_gpio = 12
 
 def hook(self):
 	global hook_gpio
@@ -84,17 +84,22 @@ if __name__ == '__main__':
 				ring_times = random.randint(1,3)
 				i = 1
 				while i <= ring_times:
-					subprocess.call(command_string, shell=True)
-					i += 1
+					if (previous_pin_status == 1): #hang up during ringing
+						i = ring_times + 1
+						break
+					if (previous_pin_status == 0):
+						subprocess.call(command_string, shell=True)
+						i += 1
 				zip = listToString(dial_list)
 				print(zip)
 				dial_list = []
 				subprocess.Popen("killall -9 mplayer", shell = True)
-				command_string = "ruby /home/dlynch/automatic-david-lynch-weather/weather.rb %s" % (zip)
-				weather_process = subprocess.run(command_string, capture_output=True, shell=True)
+				if (previous_pin_status == 0):
+					command_string = "ruby /home/dlynch/automatic-david-lynch-weather/weather.rb %s" % (zip)
+					weather_process = subprocess.run(command_string, capture_output=True, shell=True)
 				#weather_process_string = str(weather_process)
 				#print("string from weather_process")
 				#print(weather_process_string)
-				if "key not found: \"location\"" in str(weather_process):
-					cannot_complete_string = "mplayer %s/cannot_complete.mp3" % script_dir
-					subprocess.Popen(cannot_complete_string, shell = True)
+					if "key not found: \"location\"" in str(weather_process):
+						cannot_complete_string = "mplayer %s/cannot_complete.mp3" % script_dir
+						subprocess.Popen(cannot_complete_string, shell = True)

@@ -11,7 +11,7 @@ import random
 script_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(script_path)
 input_gpio = 26
-hook_gpio = 16
+hook_gpio = 12
 
 def hook(self):
 	global hook_gpio
